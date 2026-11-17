@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="UniCam3R: Grounding Matching and 3D Reconstruction Across Mixed Cameras">
+<title>UniCam3R</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF5D06' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 12l7-4M12 12l-7-4M12 12v9'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:title" content="UniCam3R">
+<meta property="og:description" content="Grounding Matching and 3D Reconstruction Across Mixed Cameras">
+<meta property="og:image" content="assets/teaser.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap">
+<style>
+:root{
+  --ink:#141413;
+  --ivory:#FFFFFF;
+  --oat:#FFE4D6;
+  --teal:#218375;
+  --slate:#3A3E44;
+  --mid:#7A7E85;
+  --panel:#F3F3F3;
+  --sunken:#F6F7F9;
+  --warm-line:#E6E8EC;
+  --line:rgba(31,30,29,.10);
+  --brand:#E04E0B;
+  --brand-hover:#B23403;
+  --coral:#FF5D06;
+  --tint:rgba(255,93,6,.10);
+  --serif:"Google Sans","Noto Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --body:"Noto Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  --r-lg:16px; --r-md:12px;
+  --card-shadow:0 1px 2px rgba(31,30,29,.04),0 10px 28px -16px rgba(31,30,29,.16);
+  --card-shadow-hi:0 2px 4px rgba(31,30,29,.05),0 18px 36px -18px rgba(31,30,29,.24);
+  --frost:rgba(255,255,255,.88);
+  --paper:#FFFFFF;
+  --sheet-shadow:0 1px 1px rgba(30,34,42,.05),0 2px 6px -2px rgba(30,34,42,.08),0 14px 30px -20px rgba(30,34,42,.22);
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cfilter id='p' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.045' numOctaves='5' stitchTiles='stitch' result='n'/%3E%3CfeDiffuseLighting in='n' lighting-color='%23fff' surfaceScale='1.6'%3E%3CfeDistantLight azimuth='45' elevation='64'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px;overflow-x:hidden}
+body{margin:0;overflow-x:hidden;background-color:#fff;color:var(--ink);font-family:var(--body);font-size:1rem;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,p,figure{margin:0}
+img,video{display:block;max-width:100%}
+a{color:inherit}
+button{font:inherit;color:inherit}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+
+.container{width:100%;max-width:1050px;margin-inline:auto;padding-inline:1.5rem}
+
+/* Header */
+.hero{padding:5.2rem 0 2.3rem;text-align:center}
+.title{max-width:62rem;margin:0 auto;font-family:var(--serif);font-size:clamp(1.55rem,3.2vw,2.4rem);font-weight:500;line-height:1.22;letter-spacing:-.02em;text-wrap:balance}
+.wordmark{font-weight:700;color:var(--brand)}
+.subtitle-tag{margin-top:1.1rem;font-size:1.05rem;color:#4A4E57}
+.venue{margin-top:.8rem;font-family:var(--serif);font-size:1.12rem;font-weight:600;color:var(--brand)}
+.links{display:flex;flex-wrap:wrap;justify-content:center;gap:.55rem;margin-top:1.5rem}
+
+.btn{--glow:rgba(30,34,40,.42);position:relative;display:inline-flex;align-items:center;gap:.5em;height:2.6rem;padding-inline:1rem;border:0;border-radius:10px;background:var(--slate);color:#fff;font-size:1.02rem;font-weight:500;white-space:nowrap;text-decoration:none;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08);transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
+.btn svg{width:18px;height:18px;flex:none;fill:currentColor;transition:transform .2s ease}
+.btn:hover{transform:translateY(-2px);box-shadow:0 12px 22px -10px var(--glow),0 2px 4px rgba(0,0,0,.06);background:#26292E}
+.btn:hover svg{transform:scale(1.1)}
+.btn:active{transform:translateY(0) scale(.97)}
+.btn-primary{--glow:rgba(255,93,6,.45);background:var(--coral)}
+.btn-primary:hover{background:#E04E0B}
+.btn-arxiv{--glow:rgba(179,27,27,.45);background:#B31B1B}
+.btn-arxiv:hover{background:#951616}
+.btn[aria-disabled="true"]{cursor:default;opacity:.88}
+.btn[aria-disabled="true"]::after,.btn[aria-disabled="true"]::before{position:absolute;left:50%;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease}
+.btn[aria-disabled="true"]::after{content:"Coming soon";top:calc(100% + .7rem);padding:.35rem .7rem;border-radius:.5rem;background:var(--ink);color:var(--ivory);font-size:.75rem;white-space:nowrap;transform:translate(-50%,-4px);z-index:5}
+.btn[aria-disabled="true"]::before{content:"";top:calc(100% + .7rem - 4px);width:8px;height:8px;background:var(--ink);transform:translate(-50%,-4px) rotate(45deg);z-index:5}
+.btn[aria-disabled="true"]:hover::after{opacity:1;transform:translate(-50%,0)}
+.btn[aria-disabled="true"]:hover::before{opacity:1;transform:translate(-50%,0) rotate(45deg)}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:.65rem 1.8rem;margin-bottom:1.35rem}
+.chip-group{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.55rem}
+.chip{padding:.48rem 1.05rem;border:1px solid var(--warm-line);border-radius:8px;background:#fff;font-size:.96rem;cursor:pointer;transition:all .2s ease}
+.chip:active{transform:scale(.97)}
+.chip:hover{border-color:var(--coral);color:var(--brand)}
+.chip[aria-pressed="true"]{border-color:rgba(255,93,6,.45);background:var(--oat);color:var(--brand-hover);font-weight:500}
+
+/* Sections */
+.section{padding:2.5rem 0}
+.section h2{margin-bottom:1.25rem;font-family:var(--serif);font-size:1.875rem;font-weight:700;letter-spacing:-.012em;line-height:1.25;text-align:center}
+.section p.text{font-size:1rem;line-height:1.8;text-align:left}
+
+/* Table */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.92rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+th,td{padding:.58rem .72rem;text-align:center;border-bottom:1px solid var(--warm-line);transition:background .15s ease}
+th:first-child,td:first-child{text-align:left}
+thead th{font-family:var(--serif);font-weight:700;border-bottom:2px solid #DBDBDB}
+tbody tr:last-child td{border-bottom:0}
+th.grp,td.grp{border-left:1px solid var(--warm-line)}
+tbody tr.ours td{background:var(--oat);font-weight:700}
+tbody tr.ours td:first-child span{color:var(--brand)}
+tbody tr.sec-row td{background:var(--sunken);font-style:italic;font-weight:500;color:#4A4E57;padding-block:.38rem}
+td.b{font-weight:700;color:var(--brand)}
+.table-note{margin-top:.85rem;font-size:.88rem;line-height:1.6;text-align:left;color:#3A3D44}
+
+/* Figure */
+.figure{padding:1.2rem;border:1px solid var(--warm-line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--sheet-shadow)}
+.figure .slot{position:relative}
+.figure .slot img{display:block;width:100%;height:auto}
+.figure.narrow .slot img{max-width:560px;margin-inline:auto}
+.figure-caption{margin-top:.85rem;font-size:.9rem;line-height:1.6;text-align:left;color:#3A3D44}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:2.4rem;align-items:center}
+.split h2{text-align:left!important}
+.split .figure{padding:1rem}
+@media (max-width:860px){.split{grid-template-columns:1fr}}
+
+.lead{font-size:1.02rem;line-height:1.7;text-align:left}
+.steps{margin:1.3rem 0 0;padding:0;list-style:none;counter-reset:st;display:grid;gap:.95rem}
+.steps li{position:relative;padding-left:2.55rem;counter-increment:st}
+.steps li::before{content:counter(st);position:absolute;left:0;top:.05rem;display:grid;place-items:center;width:1.8rem;height:1.8rem;border-radius:8px;background:var(--oat);color:var(--brand);font-family:var(--serif);font-weight:700}
+.steps b{display:block;font-family:var(--serif);font-size:1.02rem}
+.steps span{display:block;font-size:.94rem;line-height:1.6;color:#33363D}
+
+/* Overview Highlight Card */
+.stats{max-width:1020px;margin:0 auto;padding:1.45rem 1.6rem;border:1px solid var(--warm-line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--sheet-shadow)}
+.stats.hl-wrap{max-width:none;display:grid;grid-template-columns:15.2rem minmax(0,1fr) 15.6rem;gap:1.45rem}
+.hl-mid{padding:0 1.25rem;border-left:1px solid var(--warm-line);border-right:1px solid var(--warm-line)}
+.hl-title{margin-bottom:.95rem;font-family:var(--serif);font-size:1.02rem;font-weight:700;text-align:center}
+.hl-grid{display:grid;grid-template-columns:1fr;gap:1.35rem}
+.hl-name{display:flex;align-items:center;flex-wrap:wrap;margin-bottom:.5rem;font-family:var(--serif);font-size:.94rem;font-weight:700}
+.hl-name span{flex-basis:100%;margin:.12rem 0 0 1.5rem;font-family:var(--body);font-size:.79rem;font-weight:400;color:#555962}
+.hl-head{width:1.05rem;height:1.05rem;margin-right:.45rem;fill:none;stroke:var(--brand);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hl-row{display:grid;grid-template-columns:10.2rem minmax(0,1fr) 3.4rem;align-items:center;gap:.55rem;height:1.62rem;font-size:.83rem}
+.hl-label{display:flex;align-items:center;gap:.45rem;white-space:nowrap;transition:color .15s ease}
+.hl-icon{display:inline-grid;flex:none;place-items:center;width:1.25rem;height:1.25rem;border-radius:6px;background:var(--oat);color:var(--brand);transition:background .15s ease,color .15s ease}
+.hl-row:not(.ours) .hl-icon{background:var(--sunken);color:#6D737F}
+.hl-icon svg{width:.82rem;height:.82rem;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hl-bar{height:.6rem;border-radius:3px;background:var(--sunken)}
+.hl-bar i{display:block;height:100%;border-radius:3px;background:#B5B8BE;transition:background .15s ease}
+.hl-row.ours{font-weight:700;color:var(--brand)}
+.hl-row.ours .hl-bar i{background:var(--coral)}
+.hl-val{font-variant-numeric:tabular-nums;text-align:right;transition:color .15s ease}
+.hl-side-title{margin-bottom:.75rem;font-family:var(--serif);font-size:1.02rem;font-weight:700}
+.hl-slots{margin:.2rem 0 0;padding:0;list-style:none;display:grid;gap:.58rem}
+.hl-slots li{padding-left:.72rem;border-left:3px solid var(--brand);font-size:.81rem;line-height:1.45;color:#33363D}
+.hl-slots b{display:block;font-size:.86rem;color:var(--ink)}
+.hl-sum{margin-top:.9rem;font-size:.83rem;line-height:1.5;color:#33363D}
+.hl-sum b{font-family:var(--serif);font-size:1.08rem;color:var(--brand)}
+.hl-dialog{margin:0;padding:0;list-style:none;counter-reset:q;display:grid;gap:.45rem}
+.hl-dialog li{counter-increment:q;display:grid;grid-template-columns:1.3rem minmax(0,1fr) auto;align-items:center;gap:.4rem;padding:.38rem .52rem;border-radius:8px;background:var(--oat);font-size:.82rem}
+.hl-dialog li::before{content:"S" counter(q);font-weight:700;color:var(--brand);font-size:.75rem}
+.hl-dialog b{padding:.06rem .42rem;border-radius:6px;background:#fff;text-align:center;font-variant-numeric:tabular-nums;color:var(--brand);font-size:.78rem}
+@media (max-width:1080px){.stats.hl-wrap{grid-template-columns:1fr}.hl-mid{padding:1.35rem 0;border:0;border-top:1px solid var(--warm-line);border-bottom:1px solid var(--warm-line)}}
+
+/* Reading position rail */
+.pnav{display:none}
+@media (min-width:1360px){.pnav{position:fixed;z-index:30;left:clamp(18px,2vw,40px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;--row:2.25rem;--dot:7px}}
+.pnav-track{position:absolute;left:calc(var(--dot) / 2 - 1px);top:calc(var(--row) / 2);bottom:calc(var(--row) / 2);width:2px;border-radius:1px;background:rgba(20,20,19,.12)}
+.pnav-fill{position:absolute;left:0;top:0;width:100%;height:0;border-radius:1px;background:var(--coral)}
+.pnav a{position:relative;display:flex;align-items:center;gap:.8rem;height:var(--row);text-decoration:none}
+.pnav b{position:relative;flex:none;width:var(--dot);height:var(--dot);border-radius:50%;background:var(--ivory);box-shadow:inset 0 0 0 1.5px rgba(20,20,19,.15);transition:transform .3s ease,background .3s ease}
+.pnav a.read b,.pnav a.on b{background:var(--coral);box-shadow:none}
+.pnav a.on b{transform:scale(1.45)}
+.pnav a.on b::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--coral);animation:breathe 2.4s ease-in-out infinite}
+@keyframes breathe{0%{transform:scale(1);opacity:.55}70%,100%{transform:scale(3.2);opacity:0}}
+.pnav a span{padding:.15rem .45rem;border-radius:.3rem;background:rgba(255,255,255,.95);font-size:.75rem;white-space:nowrap;opacity:0;transform:translateX(-4px);pointer-events:none;transition:opacity .2s ease,transform .2s ease}
+.pnav:hover a span,.pnav.active a span{opacity:1;transform:none;pointer-events:auto}
+.pnav a:hover b{transform:scale(1.45)}
+.pnav a.on span{opacity:1;transform:none;font-weight:700;color:var(--brand)}
+
+/* Top bar */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:40;background:rgba(255,255,255,.88);-webkit-backdrop-filter:saturate(160%) blur(14px);backdrop-filter:saturate(160%) blur(14px);border-bottom:1px solid var(--warm-line);transform:translateY(-100%);transition:transform .3s ease}
+.topbar.show{transform:none}
+.topbar .container{display:flex;align-items:center;gap:1.5rem;height:56px}
+.topbar .brand{flex:none;font-family:var(--serif);font-size:1.18rem;font-weight:700;color:var(--brand);text-decoration:none}
+.topbar nav{display:flex;gap:.2rem;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.topbar nav::-webkit-scrollbar{display:none}
+.topbar nav a{padding:.35rem .7rem;border-radius:999px;font-size:.9rem;text-decoration:none;white-space:nowrap;transition:background .2s ease}
+.topbar nav a:hover{background:var(--oat)}
+.topbar nav a.on{background:var(--oat);color:var(--brand-hover);font-weight:700}
+.topbar .btn{height:2.2rem;padding-inline:.95rem;font-size:.92rem}
+@media (max-width:860px){.topbar nav{display:none}.topbar .btn{margin-left:auto}}
+
+/* Paper grain & cards */
+.sheet{padding:1.15rem 1.45rem;border:1px solid #E6E8EC;border-radius:var(--r-lg);background:#fff;box-shadow:var(--sheet-shadow)}
+.table-wrap.sheet{padding:.45rem 1rem}
+pre{margin:0;padding:1.25rem 1.5rem;overflow-x:auto;border-radius:var(--r-md);background:#fff;border:1px solid #E6E8EC;box-shadow:var(--sheet-shadow);font:400 .85rem/1.6 var(--mono);text-align:left}
+footer{padding:2.4rem 0 2.8rem;background:rgba(255,255,255,.75);border-top:1px solid #E6E8EC;font-size:.9rem;text-align:center}
+footer .meta{margin-top:.35rem;font-size:.82rem;color:#5A5E68}
+.fig-no{font-weight:700;color:var(--ink)}
+.kicker{display:inline-block;margin-right:.7rem;font:500 .62em/1 var(--mono);letter-spacing:.04em;color:var(--brand);vertical-align:.3em}
+
+details.abs summary{cursor:pointer;list-style:none;margin-top:.9rem;font-size:.9rem;font-weight:500;color:var(--brand)}
+details.abs summary::-webkit-details-marker{display:none}
+details.abs summary::before{content:"+ ";font-family:var(--mono)}
+details.abs[open] summary::before{content:"\2212  "}
+details.abs p{margin-top:.8rem;font-size:.95rem;line-height:1.75;color:#33332F}
+.abs-points{margin:0;padding:0;list-style:none;display:grid;gap:.62rem}
+.abs-points li{position:relative;padding-left:1.3rem;font-size:.98rem;line-height:1.62}
+.abs-points li::before{content:"";position:absolute;left:.2rem;top:.62em;width:6px;height:6px;border-radius:2px;background:var(--brand)}
+
+.note-card{max-width:920px;margin:1.35rem auto 0;padding:.92rem 1.25rem;border:1px solid #E6E8EC;border-left:3px solid var(--brand);border-radius:10px;background:#fff;box-shadow:var(--sheet-shadow);font-size:.94rem;line-height:1.65}
+.note-card b{color:var(--brand)}
+.sub{margin:2.4rem 0 1rem;font-family:var(--serif);font-size:1.25rem;font-weight:700;text-align:center}
+.pan-hint{display:none}
+
+@media (hover:hover){
+  .hl-row:hover .hl-label,.hl-row:hover .hl-val{color:var(--brand)}
+  .hl-row:hover .hl-icon{background:var(--brand);color:#fff}
+  .hl-row:not(.ours):hover .hl-bar i{background:#7D8B97}
+  .hl-row.ours:hover .hl-bar i{background:var(--brand-hover)}
+  tbody tr:not(.sec-row):hover td{background:#F5F6F7}
+  tbody tr.ours:hover td{background:#FBDCC4}
+}
+@media (max-width:600px){
+  .container{padding-inline:1rem}
+  .hero{padding:3rem 0 1.6rem}
+  .section{padding:2rem 0}
+  .section h2{font-size:1.58rem}
+  .figure{padding:.65rem}
+  .slot.pan{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .slot.pan img{width:auto!important;max-width:none!important;height:auto;min-width:680px}
+  .pan-hint{display:block;margin-top:.5rem;font-size:.78rem;text-align:center;color:#5A5E68}
+  .chip{padding:.36rem .62rem;font-size:.82rem}
+  table{font-size:.78rem}
+  th,td{padding:.45rem .34rem}
+  thead th{white-space:normal;line-height:1.25}
+  pre{white-space:pre-wrap;word-break:break-word;font-size:.76rem;padding:1rem}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}.pnav a.on b::after{animation:none;display:none}}
+
+
+/* PhyVGGT additions */
+tbody tr.priv td{color:#8A8E95}
+tbody tr.priv td:first-child::after{content:" *";}
+.legend{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem 1.3rem;margin-top:.7rem;font-size:.84rem;color:#33363D}
+.legend i{display:inline-block;width:.85rem;height:.85rem;margin-right:.4rem;border-radius:3px;vertical-align:-.12em}
+.hl-row.priv{color:#8A8E95}
+.hl-row.priv .hl-bar i{background:repeating-linear-gradient(135deg,#C9CCD1 0 4px,#E3E5E8 4px 8px)}
+.keyfig{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-top:1.4rem}
+.keyfig div{padding:1rem 1.1rem;border:1px solid var(--warm-line);border-radius:var(--r-md);background:#fff;text-align:center}
+.keyfig b{display:block;font-family:var(--serif);font-size:1.7rem;font-weight:700;color:var(--brand);line-height:1.2}
+.keyfig span{font-size:.86rem;color:#4A4E57}
+@media (max-width:600px){.keyfig{grid-template-columns:1fr}}
+.author{margin-top:1.1rem;font-size:1.05rem;color:#2A2D33}
+.affil{margin-top:.25rem;font-size:.9rem;color:#4A4E57}
+
+/* CoSphere additions */
+.hl-legend{display:flex;justify-content:center;gap:1.2rem;margin:-.35rem 0 1rem;font-size:.78rem;color:#4A4E57}
+.hl-legend i{display:inline-block;width:.8rem;height:.45rem;margin-right:.35rem;border-radius:2px;vertical-align:.05em}
+.hl-row.pair{grid-template-columns:8.7rem minmax(0,1fr) 5.5rem;gap:.45rem;height:1.95rem;font-size:.8rem}
+.hl-row.pair .hl-label{gap:.35rem}
+.hl-row.pair .hl-icon{display:none}
+.hl-row.pair .hl-bar{display:grid;gap:3px;height:auto;background:none}
+.hl-row.pair .hl-bar i{height:.36rem;background:#B5B8BE}
+.hl-row.pair .hl-bar i.o{background:var(--coral)}
+.hl-row.pair .hl-val{font-size:.78rem;white-space:nowrap}
+.hl-row.pair .hl-val b{color:var(--brand)}
+.hl-row.pair:hover .hl-bar i:not(.o){background:#7D8B97}
+.hl-row.pair:hover .hl-label{color:var(--brand)}
+.author{margin-top:1.1rem;font-size:1.05rem;color:#2A2D33}
+.affil{margin-top:.25rem;font-size:.9rem;color:#4A4E57}
+table.dense{font-size:.84rem}
+table.dense th,table.dense td{padding:.52rem .4rem}
+@media (max-width:600px){.hl-row.pair{grid-template-columns:6.8rem minmax(0,1fr) 5.9rem;font-size:.76rem}}
+/* UniCam3R additions */
+.lead + .keyfig{margin-top:1.2rem}
+.fig-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.4rem;margin-top:1.6rem}
+@media (max-width:860px){.fig-row{grid-template-columns:1fr}}
+.cam-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem 1.2rem;margin-top:.8rem;font-size:.84rem;color:#33363D}
+.cam-legend i{display:inline-block;width:.8rem;height:.8rem;margin-right:.38rem;border-radius:3px;vertical-align:-.1em}
+/* Interactive point-cloud demo */
+.stage{position:relative;overflow:hidden;aspect-ratio:2/1;border:1px solid var(--warm-line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--sheet-shadow);touch-action:none}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.stage .divider{position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--warm-line);pointer-events:none}
+.badge{position:absolute;top:.8rem;z-index:2;padding:.26rem .8rem;border-radius:999px;background:var(--frost);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 0 0 1px var(--warm-line),0 4px 12px -6px rgba(30,30,60,.25);font-family:var(--serif);font-size:.8rem;font-weight:700;white-space:nowrap;pointer-events:none;transform:translateX(-50%)}
+.badge b{color:var(--brand)}
+.badge.l{left:25%}.badge.r{left:75%}
+.tools{display:flex;flex-wrap:wrap;justify-content:center;gap:.45rem;margin:.95rem auto 0}
+.tool{padding:.3rem .8rem;border:1px solid var(--warm-line);border-radius:8px;background:#fff;font-family:var(--serif);font-size:.84rem;cursor:pointer}
+.tool:hover{color:var(--brand);border-color:var(--coral)}
+.tool[aria-pressed="true"]{background:var(--oat);color:var(--brand-hover);border-color:rgba(255,93,6,.45)}
+.demo-legend{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.4rem 1.3rem;margin-top:.8rem;font-size:.82rem;color:#33363D}
+.demo-legend .bar{display:inline-block;width:7rem;height:.55rem;margin:0 .45rem;border-radius:3px;vertical-align:-.05em;background:linear-gradient(90deg,#E8E5E3,#CFDBED,#B0C7E8,#94B0E0,#809ED9)}
+.demo-legend i.cam{display:inline-block;width:.85rem;height:.6rem;margin-right:.35rem;border:2px solid;border-radius:2px;vertical-align:-.05em}
+.loading{position:absolute;inset:0;display:grid;place-content:center;font-family:var(--serif);font-size:.95rem;pointer-events:none}
+.chip-title{font-family:var(--serif);font-size:.86rem;font-weight:700;color:var(--ink);margin-right:.2rem}
+#demo .chips{gap:.65rem 1.8rem;margin-bottom:.8rem}
+@media (max-width:600px){.stage{aspect-ratio:3/4}.stage .divider{top:50%;bottom:auto;left:0;right:0;width:auto;height:1px}.badge.l,.badge.r{left:50%}.badge.r{top:calc(50% + .6rem)}}
+.supp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem}
+.supp-item{padding:1rem 1.15rem;border:1px solid var(--warm-line);border-radius:var(--r-md);background:#fff;box-shadow:var(--sheet-shadow)}
+.supp-item h3{margin:0 0 .4rem;font-family:var(--serif);font-size:1rem;font-weight:700;line-height:1.35}
+.supp-item h3 span{margin-right:.45rem;font:600 .82em var(--mono);color:var(--brand)}
+.supp-item p{margin:0;font-size:.9rem;line-height:1.6;color:#3A3D44}
+.supp-lead{margin:0 auto 1.1rem;max-width:760px;font-size:.95rem;line-height:1.7;text-align:center;color:#3A3D44}
+@media (max-width:760px){.supp-grid{grid-template-columns:1fr}}
+</style>
+</head>
+
+<body>
+<div class="topbar" id="topbar">
+  <div class="container">
+    <a class="brand" href="#top">UniCam3R</a>
+    <nav id="topnav"></nav>
+    <a class="btn btn-primary" aria-disabled="true" role="link" title="Coming soon">Paper</a>
+  </div>
+</div>
+
+<nav class="pnav" id="pnav" aria-label="Sections"><span class="pnav-track"><span class="pnav-fill" id="pnav-fill"></span></span></nav>
+
+<header class="hero" id="top"><div class="container">
+  <h1 class="title"><span class="wordmark">UniCam3R</span>: Grounding Matching and 3D Reconstruction Across Mixed Cameras</h1>
+  <p class="author">Anonymous Authors</p>
+  <p class="venue">Under Review</p>
+  <div class="links">
+    <a class="btn btn-arxiv" aria-disabled="true" role="link" title="Coming soon">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 12h8v2H8zm0 4h8v2H8z"/></svg>arXiv
+    </a>
+    <a class="btn btn-primary" aria-disabled="true" role="link" title="Coming soon">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4h-6a3 3 0 0 0-3 1.5A3 3 0 0 0 9 4H3v15h6a2 2 0 0 1 2 2h2a2 2 0 0 1 2-2h6V4zM11 18.3a4 4 0 0 0-2-.5H5V6h4a2 2 0 0 1 2 2v10.3zm8-.5h-4a4 4 0 0 0-2 .5V8a2 2 0 0 1 2-2h4v11.8z"/></svg>Paper PDF
+    </a>
+    <a class="btn" aria-disabled="true" role="link" title="Coming soon">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5L14 3.5zM8 12v2h8v-2H8zm0 4v2h5v-2H8z"/></svg>Supplementary
+    </a>
+    <a class="btn" aria-disabled="true" role="link" title="Coming soon">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>Code
+    </a>
+  </div>
+</div></header>
+
+<section class="section" id="overview" data-nav="Overview" style="padding-top:0"><div class="container">
+  <div class="stats hl-wrap">
+    <aside class="hl-side">
+      <p class="hl-side-title">Why pinhole backbones break on mixed cameras</p>
+      <ul class="hl-slots">
+        <li><b>Implicit pinhole fit</b>MASt3R, VGGT and &pi;<sup>3</sup> fit a 198&deg; fisheye and a 360&deg; panorama to an effective 81&deg;&ndash;105&deg; pinhole, so predicted panoramic rays deviate by 58&deg;&ndash;68&deg;.</li>
+        <li><b>Distorted narrow-to-wide matching</b>Unrectified distortion corrupts local patches, holding relative-pose AUC@10 on real mixed-camera pairs below 0.1.</li>
+        <li><b>Unconstrained retrained rays</b>Input ray tokens neither constrain output rays nor transfer to new backbones, leaving Any3R at 13.9% and 45.7% relative 3D error on ScanNet++ and KITTI-360.</li>
+      </ul>
+      <p class="hl-sum"><b>24,051</b> depth-verified matches at 93% precision on ScanNet++ cross-model pairs, against 1,185 at 78% for MASt3R</p>
+    </aside>
+    <div class="hl-mid" id="stats"></div>
+    <aside class="hl-side">
+      <p class="hl-side-title">How UniCam3R grounds geometry on rays</p>
+      <ol class="hl-dialog">
+        <li><span>Virtual views matched to the narrower camera</span><b>training-free</b></li>
+        <li><span>Gated LoRA on pinhole inputs</span><b>g = 0</b></li>
+        <li><span>Two-fold spatial cross-validation</span><b>2 folds</b></li>
+        <li><span>Shared log-depth offsets in 5&deg; cells</span><b>O(N+K)</b></li>
+        <li><span>Depth fusion along rays</span><b>93.8% 2&sigma;</b></li>
+      </ol>
+      <p class="hl-sum">Frozen backbone with <b>3,000-step</b> gated LoRA on one GPU, keeping pinhole outputs identical</p>
+      <p class="hl-sum">Training-free VGGT + UniRay reaches <b>0.884</b> AUC@30 on ScanNet++ scenes, against 0.298 for native VGGT.</p>
+    </aside>
+  </div>
+</div></section>
+
+<section class="section" id="abstract" data-nav="Abstract"><div class="container">
+  <h2><span class="kicker">01</span>Abstract</h2>
+  <div class="sheet">
+    <ul class="abs-points">
+      <li><b>Problem.</b> Matching and reconstructing a 3D scene across pinhole, fisheye, catadioptric and panoramic cameras for robots, autonomous vehicles and multi-camera rigs.</li>
+      <li><b>Challenge.</b> Dense matchers and 3D foundation models assume pinhole projection, so wide-angle distortion breaks cross-camera correspondences, while retraining on ray maps or adding camera adapters needs multi-camera training data and leaves output rays unconstrained on unseen lenses and mixed fields of view.</li>
+      <li><b>Method.</b> On a frozen pinhole backbone, the <i>Unified Ray Camera Model</i> renders virtual perspective views matched to the narrower camera and gates LoRA updates using the projection Jacobian, <i>Cross-View Overlap Verification</i> removes the selection bias of chosen virtual views via two-fold spatial cross-validation, and <i>Along-Ray Depth Alignment</i> eliminates shared log-depth offsets per spherical cell in closed form across pairs, pose graphs and depth fusion.</li>
+      <li><b>Result.</b> UniCam3R reaches 0.879 relative-pose AUC@10 on ScanNet++ pairs against 0.703 for RoMa, and 0.093&nbsp;m ATE with 0.734 F-score on ScanNet++ scenes against 0.236&nbsp;m and 0.371 for Any3R, while transferring across frozen backbones and supporting streaming monocular SLAM.</li>
+    </ul>
+    <details class="abs">
+      <summary>Full abstract</summary>
+      <p>Matching and reconstructing a 3D scene across pinhole, fisheye, catadioptric and panoramic cameras is essential for robots, autonomous vehicles and multi-camera rigs. However, existing dense matchers and 3D foundation models assume pinhole projection, so wide-angle distortion breaks cross-camera correspondences and makes predicted rays deviate from calibration. Although retraining backbones on ray maps or adding camera adapters reduces this mismatch, it requires multi-camera training data and leaves output rays unconstrained on unseen lenses and mixed fields of view. To address these challenges, we propose UniCam3R on a frozen pinhole backbone, whose Unified Ray Camera Model renders virtual perspective views matched to the narrower camera for training-free inference and gates LoRA updates using the projection Jacobian so that pinhole outputs remain unchanged. Across unknown overlap, our Cross-View Overlap Verification removes the selection bias of chosen virtual views via two-fold spatial cross-validation with epipolar and reprojection checks. Along calibrated rays, our Along-Ray Depth Alignment models shared log-depth offsets per spherical cell to bound the weight of dense match clusters and eliminates these depth offsets in closed form across pairs, pose graphs and depth fusion. Experiments on real and synthetic mixed-camera benchmarks demonstrate that UniCam3R achieves state-of-the-art cross-camera matching, relative pose and 3D reconstruction, while transferring across frozen backbones without training and supporting streaming monocular SLAM. Code and pretrained models will be publicly released.</p>
+    </details>
+  </div>
+  <div class="figure" style="margin-top:1.5rem">
+    <div class="slot pan"><img src="assets/teaser.jpg?v=1117" alt="UniCam3R lowers 3D error across sixteen unseen cameras and recovers fisheye-to-pinhole matches"></div>
+  </div>
+  <p class="pan-hint">Swipe horizontally to inspect details</p>
+  <p class="figure-caption"><span class="fig-no">Figure 1.</span> Overview of mixed-camera matching and 3D reconstruction. Representing calibrated cameras by unit rays on the sphere lets UniCam3R keep a pinhole backbone frozen on the left and lower per-pixel relative 3D error across sixteen unseen Replica cameras, with corner values giving median percentage error. On a real KITTI-360 fisheye and pinhole pair on the right, virtual views and calibrated rays recover 7,105 inliers at 92% precision against 240 at 28% for MASt3R, with 100 sampled matches drawn in green and red.</p>
+</div></section>
+
+<section class="section" id="motivation" data-nav="Motivation"><div class="container">
+  <h2><span class="kicker">02</span>Ground Everything on Calibrated Rays</h2>
+  <div class="split" style="align-items:start">
+    <div>
+      <p class="lead">Although lens projections warp 2D grids differently, calibration maps every pixel <i>p</i> to a known unit bearing vector <i>r</i>(<i>p</i>) and writes each 3D point as <i>X</i>(<i>p</i>) = &rho;(<i>p</i>)&thinsp;<i>r</i>(<i>p</i>) with a 1D depth along that ray. Once correspondences connect calibrated rays and 3D points lie on <i>r</i>(<i>p</i>), mixed-camera reconstruction reduces to spherical matching and estimating poses and ray depths on a frozen pinhole backbone.</p>
+      <div class="keyfig">
+        <div><b>58&deg;&ndash;68&deg;</b><span>panoramic ray error of pinhole-trained 3D models</span></div>
+        <div><b>&lt;&nbsp;0.1</b><span>AUC@10 of feed-forward 3D models on real mixed pairs</span></div>
+        <div><b>45.7%</b><span>3D error of ray-retrained Any3R on KITTI-360 rigs</span></div>
+      </div>
+    </div>
+    <ol class="steps" style="margin-top:0">
+      <li><b>Unified Ray Camera Model</b><span>Virtual perspective views matched to the narrower field of view enable training-free matching, and a gating mask computed from the projection Jacobian optionally scales a ray MLP and lightweight LoRA updates so that pinhole images return exact outputs of the frozen backbone.</span></li>
+      <li><b>Cross-View Overlap Verification</b><span>Rotating virtual cameras across unknown overlap changes the extracted matches and lets misaligned views on repetitive textures produce self-consistent outliers, so candidates are scored by two-fold spatial cross-validation with epipolar and depth reprojection checks.</span></li>
+      <li><b>Along-Ray Depth Alignment</b><span>Wide-angle depths drift smoothly across neighboring rays, so shared log-depth offsets per spherical cell bound the weight of dense match clusters and are eliminated in closed form across pairs, pose graphs and depth fusion.</span></li>
+    </ol>
+  </div>
+</div></section>
+
+<section class="section" id="method" data-nav="Method"><div class="container">
+  <h2><span class="kicker">03</span>Method</h2>
+  <div class="figure"><div class="slot pan"><img src="assets/method.png?v=1117b" alt="Overview of UniCam3R"></div></div>
+  <p class="pan-hint">Swipe horizontally to inspect the full architecture</p>
+  <p class="figure-caption"><span class="fig-no">Figure 2.</span> Overview of UniCam3R. Given calibrated input images on the left, our <i>Unified Ray Camera Model</i> maps each central camera onto the unit sphere to render virtual perspective views matched to the narrower camera, while a gating mask computed from the projection Jacobian scales a ray MLP and LoRA updates on the frozen backbone so that pinhole outputs remain unchanged. In the center, <i>Cross-View Overlap Verification</i> generates candidate virtual views and evaluates them by two-fold cross-validation across disjoint spatial folds. On the right, <i>Along-Ray Depth Alignment</i> models shared depth offsets in spherical cells and eliminates them by block elimination across pairwise depth alignment, global pose graph optimization and depth fusion into a 3D point cloud.</p>
+  <p class="note-card"><b>Bounded cell weight.</b> Marginalizing the offset of a cell with <i>n</i> residuals keeps full precision on depth differences inside the cell while bounding the precision of the cell mean below the prior &lambda;<sub>&beta;</sub>. Independent pixel weights let dense clusters bias forward translation, and one scale per image cannot follow drift across a wide view; on short-baseline KITTI-360 pairs, regional offsets reach 0.867 AUC@10 against 0.751 for a single scale.</p>
+</div></section>
+
+<section class="section" id="demo" data-nav="Demo"><div class="container">
+  <h2><span class="kicker">04</span>Interactive Demo</h2>
+  <div class="chips"><div class="chip-group" id="scene-chips"><span class="chip-title">Scene</span></div></div>
+  <div class="chips" style="margin-bottom:1.1rem"><div class="chip-group" id="method-chips"><span class="chip-title">Compare with</span></div></div>
+  <div class="stage" id="stage">
+    <canvas id="gl"></canvas>
+    <div class="divider"></div>
+    <div class="badge l" id="badge-l"></div>
+    <div class="badge r" id="badge-r"></div>
+    <div class="loading" id="loading">Loading</div>
+  </div>
+  <div class="tools">
+    <button class="tool" id="t-reset" type="button">Reset View</button>
+    <button class="tool" id="t-top" type="button">Top View</button>
+    <button class="tool" id="t-err" type="button" aria-pressed="true">Error Color</button>
+    <button class="tool" id="t-img" type="button" aria-pressed="false">Image Color</button>
+    <button class="tool" id="t-cam" type="button" aria-pressed="true">Cameras</button>
+  </div>
+  <div class="demo-legend" id="demo-legend">
+    <span id="lg-err">0 cm<span class="bar"></span>&ge; 10 cm</span>
+    <span><i class="cam" style="border-color:#2674C8"></i>DSLR Fisheye</span>
+    <span><i class="cam" style="border-color:#2E8B57"></i>Phone Pinhole</span>
+    <span><i class="cam" style="border-color:#C23B83"></i>Panorama</span>
+  </div>
+  <p class="figure-caption"><span class="fig-no">Interactive demo.</span> Multi-view reconstructions of the two ScanNet++ mixed-camera test scenes in Figure 4, reconstructed jointly from fisheye, phone pinhole and panoramic views. Each reconstruction is aligned to the ground truth by the similarity of its cameras, fused into a TSDF surface, clipped at ceiling height and colored by point-to-ground-truth distance or by image color, and badges report the fraction of reconstructed points within 5&nbsp;cm. Frusta show the ground-truth cameras. Both views share one camera: drag to rotate, right-drag or Shift-drag to pan, and scroll or pinch to zoom.</p>
+</div></section>
+
+<section class="section" id="results" data-nav="Results"><div class="container">
+  <h2><span class="kicker">05</span>Results</h2>
+  <div class="chips" id="results-chips"></div>
+  <div class="table-wrap sheet"><table id="bench"></table></div>
+  <p class="table-note" id="bench-note"></p>
+
+  <h3 class="sub">Qualitative Results</h3>
+  <div class="chips" id="qual-chips"></div>
+  <div class="figure"><div class="slot pan" id="qual-slot"><img id="qual-img" src="assets/matching.jpg?v=1117" alt="Qualitative results"></div></div>
+  <p class="pan-hint">Swipe horizontally to inspect details</p>
+  <p class="figure-caption" id="qual-cap"></p>
+</div></section>
+
+<section class="section" id="ablation" data-nav="Ablation"><div class="container">
+  <h2><span class="kicker">06</span>Ablation</h2>
+  <div class="chips" id="abl-chips"></div>
+  <div class="table-wrap sheet"><table id="abl"></table></div>
+  <p class="table-note" id="abl-note"></p>
+  <ol class="steps" style="margin-top:1.6rem">
+    <li><b>Cross-View Overlap Verification</b><span>Removing verification admits false matches on large rotations and repetitive textures, lowering mean AUC@10 from 0.868 to 0.836, ScanNet++ from 0.879 to 0.805, and pairs rotated above 90&deg; from 0.874 to 0.737.</span></li>
+    <li><b>Along-Ray Depth Alignment</b><span>Benefiting from 5&deg; cells that explain 50&ndash;84% of log-depth error variance across lenses, cell depth offsets keep short-baseline KITTI-360 at 0.878 against 0.808 with one scale per view, and removing virtual views and depth alignment drops mean AUC@10 to 0.698.</span></li>
+    <li><b>Unified Ray Camera Model</b><span>Removing gated LoRA lowers whole-image mean AUC@10 to 0.398 and KITTI-360 to 0.206, while its gating mask keeps pinhole pairs at 0.893 against 0.857 without gating, and removing ray lifting leaves the raw backbone at 0.008.</span></li>
+  </ol>
+</div></section>
+
+<section class="section" id="bibtex" data-nav="BibTeX"><div class="container">
+  <h2><span class="kicker">07</span>BibTeX</h2>
+<pre id="bib">@misc{unicam3r2026,
+  title  = {{UniCam3R}: Grounding Matching and {3D} Reconstruction Across Mixed Cameras},
+  author = {Anonymous},
+  note   = {Under review},
+  year   = {2026}
+}</pre>
+</div></section>
+
+<section class="section" id="supplementary" data-nav="Supplementary"><div class="container">
+  <h2><span class="kicker">08</span>Supplementary Material</h2>
+  <p class="supp-lead">The supplementary material provides the following details beyond the main paper.</p>
+  <div class="supp-grid">
+    <div class="supp-item"><h3><span>S1</span>Properties of the Ray-Space Model</h3><p>Exactness of the gating mask on pinhole cameras and comparison with pixel-radius gating, the information of one cell block, the exact reduction to a 7&times;7 system with pairwise gauge observability, the marginal information of a pair, and the posterior of the dense range.</p></div>
+    <div class="supp-item"><h3><span>S2</span>Implementation Details</h3><p>The UniRay network and calibrated ray loss, candidate perspective views and solver, Along-Ray Depth Alignment and fusion, Cross-View Overlap Verification, the multi-view module, gate training, and thermal and event cameras.</p></div>
+    <div class="supp-item"><h3><span>S3</span>Data and Protocol</h3><p>Multi-view subsets of ScanNet++ (12 DSLR fisheye frames, up to 6 panoramas and 8 phone frames per scene) and 360Loc, ground truth, evaluation protocol and baseline settings.</p></div>
+    <div class="supp-item"><h3><span>S4</span>The Camera Inferred by Models Trained on Pinhole Images</h3><p>The single pinhole camera fitted to the predicted directions of MASt3R, DUSt3R, &pi;<sup>3</sup> and MapAnything on Replica validation pairs.</p></div>
+    <div class="supp-item"><h3><span>S5</span>Relative Pose of 3D Foundation Models</h3><p>Pose AUC@10 of 3D foundation models on the pairs of Table 1, where models trained on pinhole images stay below 0.1 and Any3R reaches at most 0.169 to 0.309.</p></div>
+    <div class="supp-item"><h3><span>S6</span>Cross-Device Relocalization</h3><p>Localizing images from other cameras in a panoramic 360Loc map, with atrium for development and concourse, hall and piatrium for testing.</p></div>
+    <div class="supp-item"><h3><span>S7</span>Agreement Between Lenses</h3><p>Relative 3D discrepancy between seven lenses, from a 60&deg; pinhole to a full panorama, rendered at the same Replica poses.</p></div>
+    <div class="supp-item"><h3><span>S8</span>MASt3R with a Monocular Metric Prior</h3><p>MASt3R pairs scaled by UniK3D metric depths and solved by our calibrated solver, evaluated for two-view 3D consistency.</p></div>
+    <div class="supp-item"><h3><span>S9</span>Further Ablations</h3><p>Dense depth fusion, directions as an output constraint, view layout, viewpoint change, the projection-Jacobian gating mask and calibrated ray loss, module design breakdowns, and depth error structure.</p></div>
+    <div class="supp-item"><h3><span>S10</span>Focal-Length Errors</h3><p>Two-view pose under randomly signed focal-length errors from 0.2% to 2% on Replica New, against RoMa and Backbone + Ray Lifting.</p></div>
+    <div class="supp-item"><h3><span>S11</span>Relative Pose by Camera Combination</h3><p>Replica New pairs split by the cameras of their two views across eight camera combinations.</p></div>
+    <div class="supp-item"><h3><span>S12</span>Multi-View Accuracy by Camera Combination</h3><p>Two-view poses against poses after the pose graph for every camera combination of the ScanNet++ test scenes, with phone pairs rising from 0.431 to 0.953 AUC@30.</p></div>
+    <div class="supp-item"><h3><span>S13</span>Mixed Lenses on Identical Views</h3><p>The same view triplets from four unused Replica scenes rendered with seven lens configurations, so that only the lenses change between rows.</p></div>
+    <div class="supp-item"><h3><span>S14</span>Number of Images</h3><p>All methods on 6, 12 and 18 images per ScanNet++ test scene, drawn in proportion to the three cameras.</p></div>
+    <div class="supp-item"><h3><span>S15</span>Larger Scenes</h3><p>Three ScanNet++ test scenes enlarged to 59&ndash;62 images and 5,372 pairs, where UniCam3R reaches 0.029&nbsp;m ATE and 0.974 AUC@30.</p></div>
+    <div class="supp-item"><h3><span>S16</span>Multi-View Focal-Length Errors</h3><p>Focal-length errors on every DSLR and phone camera of five ScanNet++ test scenes, with equirectangular panoramas kept exact.</p></div>
+    <div class="supp-item"><h3><span>S17</span>Dense Reconstruction on 360Loc</h3><p>Dense point clouds against the laser ranges of the mapping panoramas at 5&nbsp;cm and 25&nbsp;cm thresholds.</p></div>
+    <div class="supp-item"><h3><span>S18</span>Fisheye Scenes</h3><p>Single-lens reconstruction on the 12 DSLR fisheye views of every ScanNet++ test scene against Wid3R and multi-view foundation models.</p></div>
+    <div class="supp-item"><h3><span>S19</span>Comparison with Any3R</h3><p>The Any3R protocol on 50 ScanNet++ fisheye triplets and twelve 200&deg; FIORD triplets.</p></div>
+    <div class="supp-item"><h3><span>S20</span>Sixteen Cameras in Unseen Replica Apartments</h3><p>Six held-out FRL apartments in which each of sixteen viewpoints uses a different lens.</p></div>
+    <div class="supp-item"><h3><span>S21</span>Comparison under the Camera3R Protocol</h3><p>16-view mixed-camera sets on 360Loc and KITTI-360, rebuilt by the stated rule of Camera3R.</p></div>
+    <div class="supp-item"><h3><span>S22</span>Training-Free Cross-Backbone Generalization</h3><p>UniRay perspective rendering and ray lifting on frozen VGGT and &pi;<sup>3</sup> without retraining, on ScanNet++ and 360Loc development scenes.</p></div>
+    <div class="supp-item"><h3><span>S23</span>Cross-Sensor Pairs</h3><p>Color-thermal pairs of MS2 and color-event pairs of DSEC against RoMa, MINIMA-RoMa and XoFTR, with qualitative correspondences.</p></div>
+    <div class="supp-item"><h3><span>S24</span>Monocular SLAM Gate and Three-Camera Switching Ablation</h3><p>Gated and ungated adaptation on the TUM-VI development rooms, including a stream that cycles across 195&deg; fisheye, 107&deg; and 60&deg; pinhole frames.</p></div>
+    <div class="supp-item"><h3><span>S25</span>Training Seeds</h3><p>Adapters retrained from scratch with two further random seeds, with the largest spread of 0.007 AUC@10 on Holo360D.</p></div>
+    <div class="supp-item"><h3><span>S26</span>Runtime</h3><p>Active pipeline stages, network calls, runtime and peak GPU memory on an NVIDIA A100 GPU.</p></div>
+  </div>
+</div></section>
+
+<footer><div class="container">UniCam3R Project Page<p class="meta">All results use a frozen MASt3R backbone unless noted, with three-seed means on two-view benchmarks.</p></div></footer>
+
+<script>
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const ICON_BASE = '<circle cx="12" cy="12" r="8"/><path d="M4 12h16"/><path d="M12 4a12 12 0 0 1 0 16"/>';
+
+/* Paired overview: each baseline against UniCam3R (Tables 1 and 2) */
+const OVERVIEW_PAIRS = [
+  {
+    name: 'Relative-Pose AUC@10, higher is better',
+    metric: 'RoMa on calibrated bearings against UniCam3R',
+    icon: '<path d="M4 19l5-7 4 3 7-10"/><circle cx="20" cy="5" r="2"/>',
+    max: 1, lower: false,
+    rows: [
+      {label: 'ScanNet++', base: 0.703, ours: 0.879, f: 3},
+      {label: 'KITTI-360 Rig', base: 0.705, ours: 0.878, f: 3},
+      {label: 'Holo360D', base: 0.619, ours: 0.731, f: 3},
+      {label: 'Replica Roll', base: 0.841, ours: 0.920, f: 3}
+    ]
+  },
+  {
+    name: 'Point-Cloud F-Score (5 cm), higher is better',
+    metric: 'ScanNet++ multi-view test scenes',
+    icon: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>',
+    max: 0.8, lower: false,
+    rows: [
+      {label: 'Any3R', base: 0.371, ours: 0.734, f: 3},
+      {label: 'Wid3R', base: 0.116, ours: 0.734, f: 3},
+      {label: 'π³', base: 0.085, ours: 0.734, f: 3},
+      {label: 'VGGT', base: 0.025, ours: 0.734, f: 3}
+    ]
+  }
+];
+
+(function renderOverview() {
+  const host = document.getElementById('stats');
+  const pct = (v, m) => Math.max(1.5, Math.min(100, v / m * 100)).toFixed(1);
+  host.innerHTML = '<p class="hl-title">Paired Comparison on Mixed-Camera Test Sets</p>' +
+    '<p class="hl-legend"><span><i style="background:#B5B8BE"></i>Baseline</span><span><i style="background:var(--coral)"></i>UniCam3R</span></p><div class="hl-grid">' +
+    OVERVIEW_PAIRS.map(p => (
+      '<div class="hl-panel">' +
+      `<p class="hl-name"><svg class="hl-head" viewBox="0 0 24 24" aria-hidden="true">${p.icon}</svg>${esc(p.name)}<span>${esc(p.metric)}</span></p>` +
+      p.rows.map(r => `<div class="hl-row pair"><span class="hl-label">${esc(r.label)}</span>` +
+        `<span class="hl-bar"><i style="width:${pct(r.base, p.max)}%"></i><i class="o" style="width:${pct(r.ours, p.max)}%"></i></span>` +
+        `<span class="hl-val">${r.base.toFixed(r.f)} &rarr; <b>${r.ours.toFixed(r.f)}</b></span></div>`).join('') +
+      '</div>'
+    )).join('') + '</div>';
+})();
+
+const ALL = n => [...Array(n).keys()];
+
+const RESULTS = [
+  {
+    label: 'Two-View Relative Pose',
+    no: 'Table 1.',
+    note: 'Two-view matching and relative pose across mixed cameras. Entries report three-seed mean pose AUC@10 on ScanNet++, the KITTI-360 rig, Holo360D, FIORD and Replica New, Unseen and Roll, plus ScanNet++ epipolar precision in percent below 0.5°. Bold marks the best result.',
+    groups: [['Mixed-Camera Pairs', 4], ['Replica', 3], ['ScanNet++', 1]],
+    columns: ['ScanNet++', 'KITTI-360', 'Holo360D', 'FIORD', 'New', 'Unseen', 'Roll', 'Precision'],
+    rows: [
+      {sec: 'Matchers and 3D Models'},
+      {cells: ['SuperPoint + SuperGlue', '0.375', '0.084', '0.425', '0.759', '0.700', '0.770', '0.622', '54']},
+      {cells: ['XoFTR', '0.214', '0.000', '0.354', '0.718', '0.583', '0.764', '0.436', '19']},
+      {cells: ['MINIMA-RoMa', '0.615', '0.603', '0.599', '0.782', '0.948', '0.972', '0.848', '51']},
+      {cells: ['RoMa', '0.703', '0.705', '0.619', '0.805', '0.955', '0.975', '0.841', '57']},
+      {cells: ['EDM', '0.025', '0.000', '0.103', '0.224', '0.313', '0.320', '0.242', '2']},
+      {cells: ['SphereGlue', '0.255', '0.223', '0.516', '0.789', '0.810', '0.927', '0.715', '17']},
+      {cells: ['MASt3R', '0.019', '0.000', '0.004', '0.052', '0.007', '0.010', '0.003', '52']},
+      {cells: ['Any3R', '0.225', '0.000', '0.176', '0.309', '0.281', '0.169', '0.230', '–']},
+      {sec: 'Controlled Baselines'},
+      {cells: ['Backbone + Ray Lifting', '0.437', '0.206', '0.317', '0.511', '0.631', '0.652', '0.502', '52']},
+      {cells: ['RoMa + Our Views', '0.746', '0.788', '0.658', '0.808', '0.963', '0.978', '0.874', '61']},
+      {cells: ['Backbone + Cube Faces', '0.859', '0.728', '0.698', '0.794', '0.967', '0.980', '0.891', '81']},
+      {sec: 'Ours'},
+      {cells: ['UniCam3R', '0.879', '0.878', '0.731', '0.810', '0.983', '0.989', '0.920', '89'], ours: true, boldIdx: ALL(8)}
+    ]
+  },
+  {
+    label: 'Pairwise 3D Consistency',
+    no: 'Table 2 (left).',
+    note: 'Pairwise 3D consistency across mixed cameras: median relative 3D error of points from the second view transformed into the first camera on mixed-camera pairs (lower is better). Bold marks the best result.',
+    groups: [['Real Pairs', 2], ['Replica', 3]],
+    columns: ['ScanNet++', 'KITTI-360', 'New', 'Unseen', 'Roll'],
+    rows: [
+      {sec: 'Feed-Forward 3D Models'},
+      {cells: ['VGGT', '0.937', '0.950', '0.815', '0.712', '1.089']},
+      {cells: ['π³', '0.746', '0.879', '0.502', '0.570', '0.753']},
+      {cells: ['Depth Anything 3', '0.901', '1.010', '0.629', '0.646', '0.990']},
+      {cells: ['OmniVGGT', '0.895', '0.948', '0.855', '0.885', '1.089']},
+      {cells: ['MapAnything', '0.685', '0.888', '0.668', '0.771', '0.917']},
+      {cells: ['Wid3R', '0.490', '0.560', '0.748', '0.776', '0.762']},
+      {cells: ['Any3R', '0.139', '0.457', '0.051', '0.070', '0.073']},
+      {sec: 'Ours'},
+      {cells: ['UniCam3R', '0.055', '0.054', '0.028', '0.043', '0.033'], ours: true, boldIdx: ALL(5)}
+    ]
+  },
+  {
+    label: 'Multi-View Reconstruction',
+    no: 'Table 2 (right).',
+    note: 'Multi-view scene reconstruction across mixed cameras: similarity-aligned camera ATE in meters, pairwise pose AUC@30 and 5 cm point-cloud F-score on ScanNet++ and 360Loc test scenes. RoMa and VGGT + UniRay are controlled baselines under our pose graph and fusion, and – marks metrics a method does not produce. Bold marks the best result.',
+    groups: [['ScanNet++', 3], ['360Loc', 3]],
+    columns: ['ATE ↓', 'AUC@30 ↑', 'F-score ↑', 'ATE ↓', 'AUC@30 ↑', 'F-score ↑'],
+    rows: [
+      {sec: 'Feed-Forward 3D Models'},
+      {cells: ['VGGT', '1.218', '0.298', '0.025', '3.74', '0.021', '0.006']},
+      {cells: ['π³', '0.871', '0.284', '0.085', '3.55', '0.032', '0.012']},
+      {cells: ['Depth Anything 3', '0.896', '0.132', '0.082', '3.63', '0.028', '0.011']},
+      {cells: ['OmniVGGT', '1.093', '0.363', '0.072', '3.82', '0.020', '0.008']},
+      {cells: ['MapAnything', '0.835', '0.395', '0.069', '3.34', '0.042', '0.012']},
+      {cells: ['Wid3R', '0.825', '0.337', '0.116', '3.52', '0.241', '0.009']},
+      {cells: ['Any3R', '0.236', '0.646', '0.371', '1.01', '0.598', '0.065']},
+      {sec: 'Optimization and Controlled Baselines'},
+      {cells: ['COLMAP', '1.404', '0.359', '–', '–', '–', '–']},
+      {cells: ['GLOMAP', '1.444', '0.605', '–', '–', '–', '–']},
+      {cells: ['RoMa', '0.425', '0.750', '–', '0.60', '0.860', '–']},
+      {cells: ['VGGT + UniRay', '0.120', '0.884', '–', '–', '–', '–']},
+      {sec: 'Ours'},
+      {cells: ['UniCam3R w/o Gated LoRA', '0.113', '0.941', '0.679', '0.25', '0.913', '0.154']},
+      {cells: ['UniCam3R', '0.093', '0.956', '0.734', '0.21', '0.932', '0.216'], ours: true, boldIdx: ALL(6)}
+    ]
+  },
+  {
+    label: 'Monocular SLAM',
+    no: 'Table 3.',
+    note: 'Streaming monocular SLAM on TUM-VI test rooms. Entries report three-seed mean keyframe ATE in cm across Rooms 3 to 6, where † marks fisheye streams pre-rectified to a 107° pinhole and * marks uncalibrated input. Bold marks the best result.',
+    groups: [['Keyframe ATE (cm) ↓', 3]],
+    columns: ['Fisheye', 'Mixed 107°', 'Mixed 60°'],
+    rows: [
+      {cells: ['VGGT-SLAM †', '49.44', '–', '–']},
+      {cells: ['VGGT-SLAM 2.0 †', '27.37', '–', '–']},
+      {cells: ['SLAM3R †', '47.05', '–', '–']},
+      {cells: ['MASt3R-SLAM *', '105.53', '84.40', '80.25']},
+      {cells: ['MASt3R-SLAM †', '2.92', '–', '–']},
+      {cells: ['UniCam3R w/o Gated LoRA', '4.56', '2.97', '6.08']},
+      {cells: ['UniCam3R', '1.80', '2.05', '2.77'], ours: true, boldIdx: ALL(3)}
+    ]
+  }
+];
+
+const ABLATIONS = [
+  {
+    label: 'Two-View Components',
+    no: 'Table 4.',
+    note: 'Component ablation of UniCam3R on mixed-camera test pairs. Starting from the full model, each row cumulatively removes components and reports three-seed mean pose AUC@10.',
+    groups: [['AUC@10 ↑', 5]],
+    columns: ['ScanNet++', 'KITTI-360', 'Holo360D', 'Replica', 'Mean'],
+    rows: [
+      {cells: ['UniCam3R', '0.879', '0.878', '0.731', '0.983', '0.868'], ours: true, boldIdx: ALL(5)},
+      {cells: ['w/o Overlap Verification', '0.805', '0.867', '0.691', '0.982', '0.836']},
+      {cells: ['w/o Views and Alignment', '0.642', '0.798', '0.480', '0.873', '0.698']},
+      {cells: ['w/o Gated LoRA', '0.437', '0.206', '0.317', '0.631', '0.398']},
+      {cells: ['w/o Ray Lifting', '0.019', '0.000', '0.004', '0.007', '0.008']}
+    ]
+  },
+  {
+    label: 'Scene Reconstruction',
+    no: 'Table 5.',
+    note: 'Scene reconstruction ablation on ScanNet++ and 360Loc. Rows report similarity-aligned camera ATE in meters, pairwise pose AUC@30 and 5 cm point-cloud F-score.',
+    groups: [['ScanNet++', 3], ['360Loc', 3]],
+    columns: ['ATE ↓', 'AUC@30 ↑', 'F-score ↑', 'ATE ↓', 'AUC@30 ↑', 'F-score ↑'],
+    rows: [
+      {cells: ['UniCam3R', '0.093', '0.956', '0.734', '0.21', '0.932', '0.216'], ours: true, boldIdx: ALL(6)},
+      {cells: ['w/o Gated LoRA', '0.113', '0.941', '0.679', '0.25', '0.913', '0.154']},
+      {cells: ['w/o Pose Graph', '0.132', '0.918', '–', '0.54', '0.853', '–']}
+    ]
+  }
+];
+
+const QUAL_ITEMS = [
+  {
+    label: 'Cross-Camera Matching',
+    src: 'assets/matching.jpg?v=1117',
+    no: 'Figure 3.',
+    cap: 'Qualitative cross-camera matching on ScanNet++ and Holo360D test pairs. Across indoor fisheye, pinhole and panoramic pairs in the left two columns and panorama and perspective crop pairs in the right two columns, 100 sampled matches of raw MASt3R on top and UniCam3R below are drawn in green within 4 pixels on ScanNet++ and 0.5° on Holo360D, and in red otherwise.'
+  },
+  {
+    label: 'Multi-View Reconstruction',
+    src: 'assets/qual_mv.jpg?v=1117',
+    no: 'Figure 4.',
+    cap: 'Qualitative multi-view 3D reconstruction on ScanNet++ mixed-camera test scenes. Reconstructed jointly from blue fisheye, green phone pinhole and magenta panoramic cameras, each TSDF-fused mesh is clipped at ceiling height and colored by distance to ground truth after similarity alignment blended with image color, with corner values reporting the percentage of points within 5 cm.'
+  },
+  {
+    label: 'Monocular SLAM',
+    src: 'assets/slam.png?v=1117',
+    no: 'Figure 5.',
+    cap: 'Streaming monocular SLAM on TUM-VI fisheye and mixed-camera sequences. (a) Room 3 3D map and trajectory on the mixed 195° / 60° stream with orange fisheye and blue pinhole keyframes. (b, c) Keyframe trajectories and position error over time on Room 3 for the median seed, where † marks fisheye frames rectified to a 107° pinhole and * marks uncalibrated input.'
+  },
+  {
+    label: 'Color + Thermal / Event',
+    src: 'assets/cross_sensor.jpg?v=1117b',
+    narrow: true,
+    no: 'Supplementary Figure.',
+    cap: 'Qualitative cross-modal correspondences on color-thermal and color-event test pairs. Test pairs from MS2 (top two rows) and DSEC (bottom two rows) compare UniCam3R (Ours), RoMa and MINIMA-RoMa against LiDAR ground truth, with green matches within 4 pixels, red beyond, and corner precision values.'
+  }
+];
+
+function makeChips(host, items, onPick) {
+  const wrap = document.createElement('div');
+  wrap.className = 'chip-group';
+  const all = items.map(it => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = it.label;
+    b.addEventListener('click', () => pick(b, it));
+    wrap.append(b); return [b, it];
+  });
+  host.append(wrap);
+  function pick(btn, it) { all.forEach(([b]) => b.setAttribute('aria-pressed', String(b === btn))); onPick(it); }
+  pick(all[0][0], all[0][1]);
+}
+
+function rowHtml(r, starts) {
+  const [name, ...vals] = r.cells;
+  const bset = new Set(r.boldIdx || []);
+  const tds = vals.map((v, j) => {
+    const cls = [starts.has(j) ? 'grp' : '', bset.has(j) ? 'b' : ''].filter(Boolean).join(' ');
+    return `<td${cls ? ` class="${cls}"` : ''}>${esc(v)}</td>`;
+  }).join('');
+  return `<tr${r.ours ? ' class="ours"' : ''}><td>${r.ours ? `<span>${esc(name)}</span>` : esc(name)}</td>${tds}</tr>`;
+}
+
+function renderTable(T, tableId, noteId) {
+  const starts = new Set(); let k = 0;
+  T.groups.forEach(([, n]) => { starts.add(k); k += n; });
+  const ncols = T.columns.length + 1;
+  document.getElementById(tableId).classList.toggle('dense', T.columns.length > 7);
+  document.getElementById(tableId).innerHTML =
+    '<thead><tr><th></th>' + T.groups.map(([g, n]) => `<th class="grp" colspan="${n}">${esc(g)}</th>`).join('') + '</tr>' +
+    '<tr><th>Method</th>' + T.columns.map((c, j) => `<th${starts.has(j) ? ' class="grp"' : ''}>${esc(c)}</th>`).join('') + '</tr></thead>' +
+    '<tbody>' + T.rows.map(r => r.sec ? `<tr class="sec-row"><td colspan="${ncols}">${esc(r.sec)}</td></tr>` : rowHtml(r, starts)).join('') + '</tbody>';
+  document.getElementById(noteId).innerHTML = `<span class="fig-no">${esc(T.no)}</span> ${esc(T.note)}`;
+}
+
+makeChips(document.getElementById('results-chips'), RESULTS, T => renderTable(T, 'bench', 'bench-note'));
+makeChips(document.getElementById('abl-chips'), ABLATIONS, T => renderTable(T, 'abl', 'abl-note'));
+makeChips(document.getElementById('qual-chips'), QUAL_ITEMS, it => {
+  const img = document.getElementById('qual-img');
+  img.src = it.src;
+  img.style.maxWidth = it.narrow ? '640px' : '';
+  img.style.marginInline = it.narrow ? 'auto' : '';
+  document.getElementById('qual-slot').classList.toggle('pan', !it.narrow);
+  document.getElementById('qual-cap').innerHTML = `<span class="fig-no">${esc(it.no)}</span> ${esc(it.cap)}`;
+});
+
+/* Reading position rail */
+(function () {
+  const nav = document.getElementById('pnav'), fillBar = document.getElementById('pnav-fill');
+  const secs = [...document.querySelectorAll('[data-nav]')].filter(s => s.id !== 'bibtex');
+  const links = secs.map(s => {
+    const a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.innerHTML = `<b></b><span>${esc(s.dataset.nav)}</span>`;
+    nav.append(a);
+    return a;
+  });
+  function update() {
+    const y = window.scrollY + window.innerHeight * .4;
+    const tops = secs.map(s => s.getBoundingClientRect().top + window.scrollY);
+    let cur = 0;
+    tops.forEach((t, i) => { if (y >= t) cur = i; });
+    const next = tops[cur + 1];
+    const frac = next ? Math.min(1, Math.max(0, (y - tops[cur]) / (next - tops[cur]))) : 0;
+    fillBar.style.height = ((secs.length > 1 ? (cur + frac) / (secs.length - 1) : 0) * 100) + '%';
+    links.forEach((a, i) => { a.classList.toggle('read', i < cur); a.classList.toggle('on', i === cur); });
+  }
+  let idle = 0;
+  window.addEventListener('scroll', () => { update(); nav.classList.add('active'); clearTimeout(idle); idle = setTimeout(() => nav.classList.remove('active'), 1200); }, {passive: true});
+  window.addEventListener('resize', update);
+  update();
+})();
+
+/* Top bar */
+(function () {
+  const bar = document.getElementById('topbar'), nav = document.getElementById('topnav'), hero = document.querySelector('.hero');
+  const secs = [...document.querySelectorAll('[data-nav]')].filter(s => s.id !== 'overview');
+  const links = secs.map(s => { const a = document.createElement('a'); a.href = '#' + s.id; a.textContent = s.dataset.nav; nav.append(a); return a; });
+  function update() {
+    bar.classList.toggle('show', hero.getBoundingClientRect().bottom < 0);
+    const y = window.innerHeight * .4; let cur = -1;
+    secs.forEach((s, i) => { if (s.getBoundingClientRect().top <= y) cur = i; });
+    links.forEach((a, i) => a.classList.toggle('on', i === cur));
+  }
+  window.addEventListener('scroll', update, {passive: true}); update();
+})();
+
+/* ---------- interactive demo: two synchronized WebGL views ---------- */
+(() => {
+  const $d = s => document.querySelector(s);
+  const SCENES = [['5ee7c22ba0', 'Scene 1'], ['3f15a9266d', 'Scene 2']];
+  const CAMCOL = {dslr: [.149, .455, .784], pano: [.761, .231, .514], iphone: [.18, .545, .341]};
+  let scene = SCENES[0][0], other = 'Any3R', colorMode = 'E', showCam = true, J = null;
+  const cache = {}, bufs = {};
+  const cv = $d('#gl'), gl = cv.getContext('webgl', {antialias: true, alpha: false});
+  if (!gl) { $d('#loading').textContent = 'WebGL is not available in this browser'; return; }
+  gl.clearColor(1, 1, 1, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+  const chip = (label, on, cb) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = label; b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.onclick = cb; return b; };
+  const press = (g, btn) => g.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c === btn ? 'true' : 'false'));
+  const gS = $d('#scene-chips'), gM = $d('#method-chips');
+  SCENES.forEach(([k, l]) => gS.appendChild(chip(l, k === scene, e => { press(gS, e.target); load(k); })));
+
+  function prog_(vs, fs) {
+    const p = gl.createProgram();
+    [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]].forEach(([t, src]) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s)); gl.attachShader(p, s); });
+    gl.linkProgram(p); return p;
+  }
+  const PP = prog_(`attribute vec3 p;attribute vec3 c;uniform mat4 M;uniform float sz;varying vec3 vc;
+    void main(){gl_Position=M*vec4(p,1.);gl_PointSize=clamp(sz/gl_Position.w,1.5,9.);vc=c;}`,
+    `precision mediump float;varying vec3 vc;void main(){vec2 d=gl_PointCoord-.5;if(dot(d,d)>.25)discard;gl_FragColor=vec4(vc,1.);}`);
+  const LP = prog_(`attribute vec3 p;attribute vec3 c;uniform mat4 M;varying vec3 vc;void main(){gl_Position=M*vec4(p,1.);vc=c;}`,
+    `precision mediump float;varying vec3 vc;void main(){gl_FragColor=vec4(vc,1.);}`);
+
+  let cam = {}, spin = true;
+  function fit(top) {
+    if (!J) return;
+    const c = J.cen, r = J.rad;
+    cam = {tx: c[0], ty: c[1], tz: J.floor[0] + 0.35 * (J.floor[1] - J.floor[0]), yaw: -1.1, pitch: top ? 1.55 : 1.12, dist: r * (top ? 4.8 : 4.5)};
+    spin = !top;
+  }
+  const mul = (a, b) => { const o = new Float32Array(16); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + j] * b[i * 4 + k]; o[i * 4 + j] = s; } return o; };
+  function matrix(asp) {
+    const f = 1 / Math.tan(22.5 * Math.PI / 180), n = cam.dist * .02, fa = cam.dist * 20;
+    const P = new Float32Array([f / asp, 0, 0, 0, 0, f, 0, 0, 0, 0, (fa + n) / (n - fa), -1, 0, 0, 2 * fa * n / (n - fa), 0]);
+    const cp = Math.cos(cam.pitch), e = [cam.tx + cam.dist * cp * Math.cos(cam.yaw), cam.ty + cam.dist * cp * Math.sin(cam.yaw), cam.tz + cam.dist * Math.sin(cam.pitch)];
+    let z = [e[0] - cam.tx, e[1] - cam.ty, e[2] - cam.tz]; const zl = Math.hypot(...z); z = z.map(v => v / zl);
+    let up = [0, 0, 1]; if (Math.abs(z[2]) > .999) up = [-Math.cos(cam.yaw), -Math.sin(cam.yaw), 0];
+    let x = [up[1] * z[2] - up[2] * z[1], up[2] * z[0] - up[0] * z[2], up[0] * z[1] - up[1] * z[0]]; const xl = Math.hypot(...x); x = x.map(v => v / xl);
+    const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
+    const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const V = new Float32Array([x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -dot(x, e), -dot(y, e), -dot(z, e), 1]);
+    return mul(P, V);
+  }
+
+  let camBuf = null, camN = 0;
+  function buildCams() {
+    const v = [], s = J.rad * 0.09, w = s * 1.33 / 2, h = s / 2;
+    J.gt.forEach(g => {
+      const R = g.R, c = g.c, col = CAMCOL[g.dev] || [.2, .2, .2];
+      const P = [[-w, -h, s], [w, -h, s], [w, h, s], [-w, h, s]].map(p => [0, 1, 2].map(i => R[i][0] * p[0] + R[i][1] * p[1] + R[i][2] * p[2] + c[i]));
+      const seg = (a, b) => v.push(...a, ...col, ...b, ...col);
+      P.forEach(p => seg(c, p)); for (let i = 0; i < 4; i++) seg(P[i], P[(i + 1) % 4]);
+    });
+    if (!camBuf) camBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, camBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(v), gl.STATIC_DRAW); camN = v.length / 6;
+  }
+  async function getMethod(sc, k) {
+    const id = sc + '_' + k; if (bufs[id]) return bufs[id];
+    const m = cache[sc].methods.find(x => x.key === k), b = await fetch(`assets/demo/${id}.bin`).then(r => r.arrayBuffer());
+    const n = m.n, q = new Int16Array(b, 0, n * 3), E = new Uint8Array(b, n * 6, n * 3), I = new Uint8Array(b, n * 9, n * 3), lo = cache[sc].min, hi = cache[sc].max;
+    const mk = C => { const a = new Float32Array(n * 6); for (let i = 0; i < n; i++) for (let k2 = 0; k2 < 3; k2++) { a[i * 6 + k2] = lo[k2] + (q[i * 3 + k2] + 32768) / 65535 * (hi[k2] - lo[k2]); a[i * 6 + 3 + k2] = C[i * 3 + k2] / 255; } const g = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, g); gl.bufferData(gl.ARRAY_BUFFER, a, gl.STATIC_DRAW); return g; };
+    return (bufs[id] = {E: mk(E), I: mk(I), n, meta: m});
+  }
+  let token = 0, L = null, R = null;
+  async function load(sc) {
+    scene = sc; const my = ++token; $d('#loading').hidden = false;
+    if (!cache[sc]) cache[sc] = await fetch(`assets/demo/${sc}.json`).then(r => r.json());
+    if (my !== token) return;
+    J = cache[sc]; buildCams();
+    gM.querySelectorAll('.chip').forEach(c => c.remove());
+    J.methods.filter(m => m.key !== 'ours').forEach(m => gM.appendChild(chip(m.label, m.key === other, e => { press(gM, e.target); other = m.key; pick(); })));
+    const t0 = performance.now(); L = await getMethod(sc, 'ours'); if (my !== token) return; window._demoT = performance.now() - t0;
+    fit(false); await pick(); $d('#loading').hidden = true;
+  }
+  async function pick() {
+    const my = token; R = await getMethod(scene, other); if (my !== token) return;
+    const pct = m => Math.round(m.within5 * 100) + '%';
+    $d('#badge-l').innerHTML = `${L.meta.label} · <b>${pct(L.meta)}</b> within 5 cm`;
+    $d('#badge-r').innerHTML = `${R.meta.label} · ${pct(R.meta)} within 5 cm`;
+    dirty = true;
+  }
+
+  let dirty = true;
+  const narrow = () => cv.clientWidth < 600;
+  function resize() { const r = devicePixelRatio || 1, w = Math.round(cv.clientWidth * r), h = Math.round(cv.clientHeight * r); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; dirty = true; } }
+  function attr(p, name, size, stride, off) { const l = gl.getAttribLocation(p, name); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, size, gl.FLOAT, false, stride * 4, off * 4); return l; }
+  function pane(B, x, y, w, h) {
+    if (!B) return;
+    gl.viewport(x, y, w, h); gl.scissor(x, y, w, h);
+    const M = matrix(w / h);
+    gl.enable(gl.DEPTH_TEST); gl.useProgram(PP); gl.bindBuffer(gl.ARRAY_BUFFER, B[colorMode]);
+    const a = attr(PP, 'p', 3, 6, 0), b = attr(PP, 'c', 3, 6, 3);
+    gl.uniformMatrix4fv(gl.getUniformLocation(PP, 'M'), false, M); gl.uniform1f(gl.getUniformLocation(PP, 'sz'), h * .021 * (J.rad || 1));
+    gl.drawArrays(gl.POINTS, 0, B.n); gl.disableVertexAttribArray(a); gl.disableVertexAttribArray(b);
+    if (showCam && camBuf) {
+      gl.useProgram(LP); gl.bindBuffer(gl.ARRAY_BUFFER, camBuf);
+      const a2 = attr(LP, 'p', 3, 6, 0), b2 = attr(LP, 'c', 3, 6, 3);
+      gl.uniformMatrix4fv(gl.getUniformLocation(LP, 'M'), false, M); gl.drawArrays(gl.LINES, 0, camN);
+      gl.disableVertexAttribArray(a2); gl.disableVertexAttribArray(b2);
+    }
+  }
+  function frame() {
+    resize();
+    if (spin) { cam.yaw += .0015; dirty = true; }
+    if (!L && dirty) { dirty = false; gl.viewport(0, 0, cv.width, cv.height); gl.clearColor(1, 1, 1, 1); gl.clear(gl.COLOR_BUFFER_BIT); }
+    if (L && J && dirty) {
+      dirty = false; gl.enable(gl.SCISSOR_TEST);
+      gl.viewport(0, 0, cv.width, cv.height); gl.scissor(0, 0, cv.width, cv.height); gl.clearColor(1, 1, 1, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      const W = cv.width, H = cv.height;
+      if (narrow()) { const h2 = Math.floor(H / 2); pane(L, 0, H - h2, W, h2); pane(R, 0, 0, W, H - h2); }
+      else { const w2 = Math.floor(W / 2); pane(L, 0, 0, w2, H); pane(R, w2, 0, W - w2, H); }
+      gl.disable(gl.SCISSOR_TEST);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  let drag = null; const ptr = new Map();
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); ptr.set(e.pointerId, [e.clientX, e.clientY]); drag = {x: e.clientX, y: e.clientY, pan: e.button === 2 || e.shiftKey, d0: null}; spin = false; });
+  const up = e => { ptr.delete(e.pointerId); if (!ptr.size) drag = null; };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('pointermove', e => {
+    if (!drag || !J) return;
+    if (ptr.has(e.pointerId)) ptr.set(e.pointerId, [e.clientX, e.clientY]);
+    if (ptr.size === 2) { const [p, q] = [...ptr.values()], d = Math.hypot(p[0] - q[0], p[1] - q[1]); if (drag.d0) cam.dist = Math.max(J.rad * .5, Math.min(J.rad * 20, cam.dist * drag.d0 / d)); drag.d0 = d; dirty = true; return; }
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY;
+    if (drag.pan) { const s = cam.dist / cv.clientHeight * .83, cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw); cam.tx += (sy * dx - cy * dy) * s; cam.ty += (-cy * dx - sy * dy) * s; }
+    else { cam.yaw -= dx * .006; cam.pitch = Math.max(.05, Math.min(1.56, cam.pitch + dy * .005)); }
+    dirty = true;
+  });
+  cv.addEventListener('wheel', e => { if (!J) return; e.preventDefault(); spin = false; cam.dist = Math.max(J.rad * .5, Math.min(J.rad * 20, cam.dist * Math.exp(e.deltaY * .0012))); dirty = true; }, {passive: false});
+  $d('#t-reset').onclick = () => { fit(false); dirty = true; };
+  $d('#t-top').onclick = () => { fit(true); dirty = true; };
+  const setColor = m => { colorMode = m; $d('#t-err').setAttribute('aria-pressed', m === 'E'); $d('#t-img').setAttribute('aria-pressed', m === 'I'); $d('#lg-err').style.visibility = m === 'E' ? 'visible' : 'hidden'; dirty = true; };
+  $d('#t-err').onclick = () => setColor('E'); $d('#t-img').onclick = () => setColor('I');
+  $d('#t-cam').onclick = () => { showCam = !showCam; $d('#t-cam').setAttribute('aria-pressed', showCam); dirty = true; };
+  new ResizeObserver(() => dirty = true).observe(cv);
+  const io = new IntersectionObserver(e => { if (e[0].isIntersecting) { io.disconnect(); load(scene); requestAnimationFrame(frame); } }, {rootMargin: '600px'});
+  io.observe($d('#stage'));
+})();
+</script>
+</body>
+</html>
