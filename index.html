@@ -296,6 +296,31 @@ table.dense th,table.dense td{padding:.52rem .4rem}
 .supp-item p{margin:0;font-size:.9rem;line-height:1.6;color:#3A3D44}
 .supp-lead{margin:0 auto 1.1rem;max-width:760px;font-size:.95rem;line-height:1.7;text-align:center;color:#3A3D44}
 @media (max-width:760px){.supp-grid{grid-template-columns:1fr}}
+/* Phone layout (1121) */
+@media (max-width:860px){
+  .split[style]{grid-template-columns:1fr!important}
+  .topbar .container{flex-wrap:wrap;row-gap:0;height:auto;padding-top:.4rem}
+  .topbar .brand{display:flex;align-items:center;height:40px}
+  .topbar nav{display:flex;order:3;flex-basis:100%;margin:0;padding:.05rem 0 .45rem;gap:.15rem}
+  .topbar nav a{padding:.26rem .62rem;font-size:.82rem}
+  html{scroll-padding-top:96px}
+}
+@media (max-width:600px){
+  .slot.pan img{width:820px!important;min-width:0}
+  .table-wrap th:first-child,.table-wrap td:first-child{position:sticky;left:0;z-index:1;background:#fff;box-shadow:inset -1px 0 0 var(--warm-line)}
+  .table-wrap thead tr:not(:first-child) th:first-child{box-shadow:none}
+  .table-wrap tbody td:first-child{min-width:8.6rem;max-width:11rem;white-space:normal;line-height:1.3}
+  .table-wrap tr.ours td:first-child{background:var(--oat)}
+  .table-wrap tr.sec-row td{position:static;max-width:none;background:var(--sunken);box-shadow:none}
+  .table-wrap.sheet{padding-inline:0}
+  .table-wrap .sec-lab{position:sticky;left:.72rem;display:inline-block}
+  .table-hint{margin:.45rem 0 0;font-size:.78rem;text-align:center;color:#5A5E68}
+  #demo .stage{aspect-ratio:4/5}
+  #demo .ctrl{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.7rem .8rem}
+  #demo .ctrl .range{max-width:none!important}
+  .ate{display:block}
+  .ate table{margin-inline:auto}
+}
 </style>
 </head>
 
@@ -924,6 +949,15 @@ makeChips(document.getElementById('qual-chips'), QUAL_ITEMS, it => {
   new ResizeObserver(() => dirty = true).observe(cv);
   const io = new IntersectionObserver(e => { if (e[0].isIntersecting) { io.disconnect(); load(scene); requestAnimationFrame(frame); } }, {rootMargin: '600px'});
   io.observe($d('#stage'));
+})();
+</script>
+<script>/* Phone layout (1121) */
+(function(){
+  var nav=document.querySelector('.topbar nav');
+  if(nav){new MutationObserver(function(){var a=nav.querySelector('a.on');if(a&&nav.scrollWidth>nav.clientWidth)nav.scrollTo({left:a.offsetLeft-nav.clientWidth/2+a.offsetWidth/2,behavior:'smooth'});}).observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});}
+  function hints(){document.querySelectorAll('.table-wrap tr.sec-row td').forEach(function(td){if(!td.querySelector('.sec-lab'))td.innerHTML='<span class="sec-lab">'+td.innerHTML+'</span>';});document.querySelectorAll('.table-wrap').forEach(function(w){var h=w.nextElementSibling,has=h&&h.classList.contains('table-hint'),need=w.scrollWidth>w.clientWidth+2;if(need&&!has){h=document.createElement('p');h.className='table-hint';h.textContent='Swipe horizontally to see all columns';w.after(h);}else if(!need&&has){h.remove();}});}
+  window.addEventListener('load',hints);window.addEventListener('resize',hints);
+  new MutationObserver(function(){clearTimeout(hints.t);hints.t=setTimeout(hints,60);}).observe(document.body,{subtree:true,childList:true});
 })();
 </script>
 </body>
